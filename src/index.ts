@@ -11,8 +11,82 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import * as nip19 from 'nostr-tools/nip19';
+import { Signer } from './utils';
+import { base } from './base';
+
+export interface Env {
+	NOSTR_PRIVATE_KEY_RINRIN: string;
+	NOSTR_PRIVATE_KEY_CHUNCHUN: string;
+	NOSTR_PRIVATE_KEY_WHANWHAN: string;
+}
+
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
+		if (request.method !== 'POST') {
+			const body = JSON.stringify({ error: 'Method Not Allowed' });
+			return new Response(body, {
+				status: 405,
+				headers: {
+					'content-type': 'application/json; charset=utf-8',
+					Allow: 'POST',
+				},
+			});
+		}
+		if (request.body) {
+			const body = await request.text();
+			const url = new URL(request.url);
+			let nsec: string | undefined;
+			switch (url.pathname) {
+				case '/rinrin':
+					nsec = env.NOSTR_PRIVATE_KEY_RINRIN;
+					break;
+				case '/chunchun':
+					nsec = env.NOSTR_PRIVATE_KEY_CHUNCHUN;
+					break;
+				case '/whanwhan':
+					nsec = env.NOSTR_PRIVATE_KEY_WHANWHAN;
+					break;
+				default:
+					const body = JSON.stringify({ error: '404 not found' });
+					return new Response(body, {
+						status: 404,
+						headers: {
+							'content-type': 'application/json; charset=utf-8',
+						},
+					});
+			}
+			if (nsec === undefined) {
+				const body = JSON.stringify({ error: 'NOSTR_PRIVATE_KEY is undefined' });
+				return new Response(body, {
+					status: 500,
+					headers: {
+						'content-type': 'application/json; charset=utf-8',
+					},
+				});
+			}
+			const dr = nip19.decode(nsec);
+			if (dr.type !== 'nsec') {
+				const body = JSON.stringify({ error: 'NOSTR_PRIVATE_KEY is not `nsec`' });
+				return new Response(body, {
+					status: 500,
+					headers: {
+						'content-type': 'application/json; charset=utf-8',
+					},
+				});
+			}
+			const seckey = dr.data;
+			const signer = new Signer(seckey);
+
+			return await base(body, signer);
+		} else {
+			const body = JSON.stringify({ error: 'message body is not found' });
+			return new Response(body, {
+				status: 400,
+				headers: {
+					'content-type': 'application/json; charset=utf-8',
+				},
+			});
+		}
 	},
 } satisfies ExportedHandler<Env>;
