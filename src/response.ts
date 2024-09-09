@@ -3,6 +3,7 @@ import * as nip19 from 'nostr-tools/nip19';
 import { Signer } from './utils';
 import { addHai, stringToArrayPlain } from './mjlib/mj_common';
 import { getScore } from './mjlib/mj_score';
+import { getMachi } from './mjlib/mj_machi';
 
 export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer): Promise<VerifiedEvent | null> => {
 	if (requestEvent.pubkey === signer.getPublicKey()) {
@@ -63,6 +64,7 @@ const isAllowedToPost = (event: NostrEvent) => {
 const getResmap = (): [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] => {
 	const resmapReply: [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] = [
 		[/score\s(([<>()0-9mpsz])+)\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
+		[/machi\s(([<>()0-9mpsz])+)$/, res_machi],
 	];
 	return resmapReply;
 };
@@ -122,6 +124,18 @@ const res_score = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
 	content += `${r[0]}点\n`;
 	content += `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(tsumo)}:`;
 	const tags = [...getTagsReply(event), ...getTagsEmoji(addHai(tehai, tsumo))];
+	return [content, tags];
+};
+
+const res_machi = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
+	const match = event.content.match(regstr);
+	if (match === null) {
+		throw new Error();
+	}
+	const tehai = match[1];
+	const r = getMachi(tehai);
+	const content = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}\n待ち: ${r.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
+	const tags = [...getTagsReply(event), ...getTagsEmoji(r + tehai)];
 	return [content, tags];
 };
 
