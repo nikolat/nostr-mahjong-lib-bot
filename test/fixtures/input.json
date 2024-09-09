@@ -1,0 +1,12 @@
+{
+	"id": "a0ed7cffeeb04777a03b0d3663344cd5693061e5bdc034eb56a6798aefd7ed06",
+	"pubkey": "6b0a60cff3eca5a2b2505ccb3f7133d8422045cbef40f3d2c6189fb0b952e7d4",
+	"created_at": 1725798889,
+	"kind": 42,
+	"tags": [
+		["e", "c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723", "wss://relay.mymt.casa", "root"],
+		["p", "1cc73c7cc29a6c0070f39856fdb835bc9e6cbdf4dcdd207fa9eff8cf4d5699df", ""]
+	],
+	"content": "nostr:npub1rnrnclxznfkqqu8nnpt0mwp4hj0xe005mnwjqlafaluv7n2kn80sy53aq2 score 1m2m3m1p2p3p1s1s2s3s3s4s4s 2s",
+	"sig": "76b2262cf45e676afdb5682b8f120cf3ab46134a076260754d7392303030b477b81af28ab21deea0bc8ffb75b9a1fec88748d5e980696d912e0dd612d54cda5e"
+}

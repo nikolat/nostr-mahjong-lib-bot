@@ -1,6 +1,6 @@
 import { type NostrEvent, type VerifiedEvent, validateEvent, verifyEvent } from 'nostr-tools/pure';
-import type { Signer } from './utils.js';
-import { getResponseEvent } from './response.js';
+import type { Signer } from './utils';
+import { getResponseEvent } from './response';
 
 //入力イベントを検証するかどうか(デバッグ時は無効化した方が楽)
 const verifyInputEvent = true;

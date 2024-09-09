@@ -2,7 +2,7 @@ import type { EventTemplate, NostrEvent, VerifiedEvent } from 'nostr-tools/pure'
 import * as nip19 from 'nostr-tools/nip19';
 import { Signer } from './utils';
 import { addHai, stringToArrayPlain } from './mjlib/mj_common';
-import { getScore } from './mjlib/mj_score.js';
+import { getScore } from './mjlib/mj_score';
 
 export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer): Promise<VerifiedEvent | null> => {
 	if (requestEvent.pubkey === signer.getPublicKey()) {
