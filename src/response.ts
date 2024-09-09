@@ -62,7 +62,7 @@ const isAllowedToPost = (event: NostrEvent) => {
 
 const getResmap = (): [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] => {
 	const resmapReply: [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] = [
-		[/score\s(([0-9][mpsz])+)\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
+		[/score\s(([<>()0-9mpsz])+)\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
 	];
 	return resmapReply;
 };
@@ -119,6 +119,7 @@ const res_score = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
 		}
 		content += `${r[1]}符${han}翻\n`;
 	}
+	content += `${r[0]}点\n`;
 	content += `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(tsumo)}:`;
 	const tags = [...getTagsReply(event), ...getTagsEmoji(addHai(tehai, tsumo))];
 	return [content, tags];
