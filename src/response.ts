@@ -4,6 +4,7 @@ import { Signer } from './utils';
 import { addHai, stringToArrayPlain } from './mjlib/mj_common';
 import { getScore } from './mjlib/mj_score';
 import { getMachi } from './mjlib/mj_machi';
+import { getShanten } from './mjlib/mj_shanten';
 
 export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer): Promise<VerifiedEvent | null> => {
 	if (requestEvent.pubkey === signer.getPublicKey()) {
@@ -102,11 +103,22 @@ const res_score = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
 		throw new Error();
 	}
 	const tehai = match[1];
-	const tsumo = match[3];
+	const agari_hai = match[3];
 	const bafu_hai = match[5] ?? '';
 	const jifu_hai = match[7] ?? '';
-	const r = getScore(tehai, tsumo, bafu_hai, jifu_hai);
-	let content = '';
+	const [shanten, composition] = getShanten(addHai(tehai, agari_hai));
+	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(agari_hai)}:`;
+	const tags = [...getTagsReply(event), ...getTagsEmoji(addHai(tehai, agari_hai))];
+	if (shanten !== -1) {
+		const content = `${paishi}:\n和了れません`;
+		return [content, tags];
+	}
+	const r = getScore(tehai, agari_hai, bafu_hai, jifu_hai);
+	if (r[0] <= 0) {
+		const content = `${paishi}:\n役がありません`;
+		return [content, tags];
+	}
+	let content = paishi;
 	let countYakuman = 0;
 	if (r[2].size > 0) {
 		for (const [k, v] of r[2]) {
@@ -122,8 +134,6 @@ const res_score = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
 		content += `${r[1]}符${han}翻\n`;
 	}
 	content += `${r[0]}点\n`;
-	content += `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(tsumo)}:`;
-	const tags = [...getTagsReply(event), ...getTagsEmoji(addHai(tehai, tsumo))];
 	return [content, tags];
 };
 
@@ -133,8 +143,19 @@ const res_machi = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
 		throw new Error();
 	}
 	const tehai = match[1];
+	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
+	const [shanten, composition] = getShanten(tehai);
+	if (shanten > 0) {
+		const content = `${paishi}:\nテンパイしていません`;
+		const tags = [...getTagsReply(event), ...getTagsEmoji(tehai)];
+		return [content, tags];
+	} else if (shanten === -1) {
+		const content = `${paishi}:\n和了っています`;
+		const tags = [...getTagsReply(event), ...getTagsEmoji(tehai)];
+		return [content, tags];
+	}
 	const r = getMachi(tehai);
-	const content = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}\n待ち: ${r.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
+	const content = `${paishi}\n待ち: ${r.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
 	const tags = [...getTagsReply(event), ...getTagsEmoji(r + tehai)];
 	return [content, tags];
 };
