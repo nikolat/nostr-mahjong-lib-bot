@@ -64,8 +64,9 @@ const isAllowedToPost = (event: NostrEvent) => {
 
 const getResmap = (): [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] => {
 	const resmapReply: [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] = [
-		[/score\s(([<>()0-9mpsz])+)\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
-		[/machi\s(([<>()0-9mpsz])+)$/, res_machi],
+		[/shanten\s(([<>()0-9mpsz]){,44})$/, res_shanten],
+		[/score\s(([<>()0-9mpsz]){,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
+		[/machi\s(([<>()0-9mpsz]){,42})$/, res_machi],
 	];
 	return resmapReply;
 };
@@ -95,6 +96,19 @@ const getTagsReply = (event: NostrEvent): string[][] => {
 	}
 	tagsReply.push(['p', event.pubkey, '']);
 	return tagsReply;
+};
+
+const res_shanten = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
+	const match = event.content.match(regstr);
+	if (match === null) {
+		throw new Error();
+	}
+	const tehai = match[1];
+	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
+	const [shanten, composition] = getShanten(tehai);
+	const content = `${paishi}\n${shanten === -1 ? '和了' : shanten === 0 ? '聴牌(テンパイ))' : `${shanten}向聴(シャンテン)`}`;
+	const tags = [...getTagsReply(event), ...getTagsEmoji(tehai)];
+	return [content, tags];
 };
 
 const res_score = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
