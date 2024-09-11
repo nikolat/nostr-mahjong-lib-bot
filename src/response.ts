@@ -106,7 +106,7 @@ const res_shanten = (event: NostrEvent, regstr: RegExp): [string, string[][]] =>
 	const tehai = match[1];
 	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
 	const [shanten, composition] = getShanten(tehai);
-	const content = `${paishi}\n${shanten === -1 ? '和了' : shanten === 0 ? '聴牌(テンパイ))' : `${shanten}向聴(シャンテン)`}`;
+	const content = `${paishi}\n${shanten === -1 ? '和了' : shanten === 0 ? '聴牌(テンパイ)' : `${shanten}向聴(シャンテン)`}`;
 	const tags = [...getTagsReply(event), ...getTagsEmoji(tehai)];
 	return [content, tags];
 };
