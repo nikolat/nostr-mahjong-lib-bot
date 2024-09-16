@@ -132,7 +132,7 @@ const res_score = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
 		const content = `${paishi}:\n役がありません`;
 		return [content, tags];
 	}
-	let content = paishi;
+	let content = paishi + '\n';
 	let countYakuman = 0;
 	if (r[2].size > 0) {
 		for (const [k, v] of r[2]) {
