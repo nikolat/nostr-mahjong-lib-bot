@@ -62,6 +62,7 @@ export const base = async (rawBody: string, signer: Signer) => {
 			status: 204,
 		});
 	}
+	console.log({ requestEvent, responseEvent });
 	const body = JSON.stringify(responseEvent);
 	return new Response(body, {
 		status: 200,
