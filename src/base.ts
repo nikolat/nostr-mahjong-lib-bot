@@ -38,7 +38,7 @@ export const base = async (rawBody: string, signer: Signer) => {
 		});
 	}
 	//出力イベントを取得
-	let responseEvent: VerifiedEvent | null;
+	let responseEvent: VerifiedEvent[] | null;
 	try {
 		responseEvent = await getResponseEvent(requestEvent, signer);
 	} catch (error) {
@@ -62,8 +62,9 @@ export const base = async (rawBody: string, signer: Signer) => {
 			status: 204,
 		});
 	}
-	console.log({ requestEvent, responseEvent });
-	const body = JSON.stringify(responseEvent);
+	const res = responseEvent.length > 1 ? responseEvent : responseEvent.at(0);
+	console.log({ requestEvent, res });
+	const body = JSON.stringify(res);
 	return new Response(body, {
 		status: 200,
 		headers: {

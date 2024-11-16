@@ -6,7 +6,7 @@ import { getScore } from './mjlib/mj_score';
 import { getMachi } from './mjlib/mj_machi';
 import { getShanten } from './mjlib/mj_shanten';
 
-export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer): Promise<VerifiedEvent | null> => {
+export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer): Promise<VerifiedEvent[] | null> => {
 	if (requestEvent.pubkey === signer.getPublicKey()) {
 		//自分自身の投稿には反応しない
 		return null;
@@ -16,10 +16,11 @@ export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer)
 		//反応しないことを選択
 		return null;
 	}
-	return signer.finishEvent(res);
+  const events = res.map((r) => signer.finishEvent(r));
+  return events;
 };
 
-const selectResponse = async (event: NostrEvent): Promise<EventTemplate | null> => {
+const selectResponse = async (event: NostrEvent): Promise<EventTemplate[] | null> => {
 	if (!isAllowedToPost(event)) {
 		return null;
 	}
@@ -29,7 +30,7 @@ const selectResponse = async (event: NostrEvent): Promise<EventTemplate | null> 
 	}
 	const [content, kind, tags, created_at] = [...res, event.created_at + 1];
 	const unsignedEvent: EventTemplate = { kind, tags, content, created_at };
-	return unsignedEvent;
+	return [unsignedEvent];
 };
 
 const isAllowedToPost = (event: NostrEvent) => {
