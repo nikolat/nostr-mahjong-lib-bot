@@ -126,7 +126,7 @@ const isAllowedToPost = (event: NostrEvent) => {
 
 const getResmap = (): [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] => {
 	const resmapReply: [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] = [
-		[/^\\s[0]$/, res_surface0],
+		[/\\s\[0\]$/, res_surface0],
 		[/shanten\s(([<>()0-9mpsz]){2,44})$/, res_shanten],
 		[/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
 		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi],
