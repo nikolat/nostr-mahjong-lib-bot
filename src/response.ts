@@ -11,26 +11,87 @@ export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer)
 		//自分自身の投稿には反応しない
 		return null;
 	}
-	const res = await selectResponse(requestEvent);
+	const res = await selectResponse(requestEvent, signer);
 	if (res === null) {
 		//反応しないことを選択
 		return null;
 	}
-  const events = res.map((r) => signer.finishEvent(r));
-  return events;
+	const events = res.map((r) => signer.finishEvent(r));
+	return events;
 };
 
-const selectResponse = async (event: NostrEvent): Promise<EventTemplate[] | null> => {
+const selectResponse = async (event: NostrEvent, signer: Signer): Promise<EventTemplate[] | null> => {
 	if (!isAllowedToPost(event)) {
 		return null;
 	}
-	const res = await mode_reply(event);
+	const res: EventTemplate | null = await mode_reply(event);
 	if (res === null) {
 		return null;
 	}
-	const [content, kind, tags, created_at] = [...res, event.created_at + 1];
-	const unsignedEvent: EventTemplate = { kind, tags, content, created_at };
-	return [unsignedEvent];
+	if (/^\\s\[0\]/.test(res.content)) {
+		let kind0: EventTemplate;
+		const kind0_rinrin: EventTemplate = {
+			content: JSON.stringify({
+				about: '麻雀プレイヤーbot',
+				bot: true,
+				display_name: 'リンリン',
+				name: 'rinrin',
+				nip05: 'rinrin@nikolat.github.io',
+				picture: 'https://nikolat.github.io/avatar/rinrin.png',
+				website: 'https://github.com/nikolat/jong-rinrin',
+				lud16: 'nikolat@coinos.io',
+			}),
+			kind: 0,
+			tags: [],
+			created_at: event.created_at + 1,
+		};
+		const kind0_chunchun: EventTemplate = {
+			content: JSON.stringify({
+				about: '麻雀プレイヤーbot',
+				bot: true,
+				display_name: 'チュンチュン',
+				name: 'chunchun',
+				nip05: 'chunchun@nikolat.github.io',
+				picture: 'https://nikolat.github.io/avatar/chunchun.png',
+				website: 'https://github.com/nikolat/jong-chunchun',
+				lud16: 'nikolat@coinos.io',
+			}),
+			kind: 0,
+			tags: [],
+			created_at: event.created_at + 1,
+		};
+		const kind0_whanwhan: EventTemplate = {
+			content: JSON.stringify({
+				about: '麻雀プレイヤーbot',
+				bot: true,
+				display_name: 'ホワンホワン',
+				name: 'whanwhan',
+				nip05: 'whanwhan@nikolat.github.io',
+				picture: 'https://nikolat.github.io/avatar/whanwhan.png',
+				website: 'https://github.com/nikolat/jong-whanwhan',
+				lud16: 'nikolat@coinos.io',
+			}),
+			kind: 0,
+			tags: [],
+			created_at: event.created_at + 1,
+		};
+		switch (signer.getPublicKey()) {
+			case 'npub1rnrnclxznfkqqu8nnpt0mwp4hj0xe005mnwjqlafaluv7n2kn80sy53aq2':
+				kind0 = kind0_rinrin;
+				break;
+			case 'npub1chunacswmcejn8ge95vzl22a2g6pd4nfchygslnt9gj9dshqcvqq5amrlj':
+				kind0 = kind0_chunchun;
+				break;
+			case 'npub1whanysx54uf9tgjfeueljg3498kyru3rhwxajwuzh0nw0x0eujss9tlcjh':
+				kind0 = kind0_whanwhan;
+				break;
+			default:
+				throw new TypeError('invalid pubkey');
+		}
+		res.content = res.content.replace(/^\\s\[\d+\]/, '');
+		return [kind0, res];
+	}
+	return [res];
 };
 
 const isAllowedToPost = (event: NostrEvent) => {
@@ -65,6 +126,7 @@ const isAllowedToPost = (event: NostrEvent) => {
 
 const getResmap = (): [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] => {
 	const resmapReply: [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] = [
+		[/^\\s[0]$/, res_surface0],
 		[/shanten\s(([<>()0-9mpsz]){2,44})$/, res_shanten],
 		[/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
 		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi],
@@ -72,12 +134,12 @@ const getResmap = (): [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[s
 	return resmapReply;
 };
 
-const mode_reply = async (event: NostrEvent): Promise<[string, number, string[][]] | null> => {
+const mode_reply = async (event: NostrEvent): Promise<EventTemplate | null> => {
 	const resmap = getResmap();
 	for (const [reg, func] of resmap) {
 		if (reg.test(event.content)) {
 			const [content, tags] = await func(event, reg);
-			return [content, event.kind, tags];
+			return { content, kind: event.kind, tags, created_at: event.created_at + 1 };
 		}
 	}
 	return null;
@@ -97,6 +159,10 @@ const getTagsReply = (event: NostrEvent): string[][] => {
 	}
 	tagsReply.push(['p', event.pubkey, '']);
 	return tagsReply;
+};
+
+const res_surface0 = (event: NostrEvent): [string, string[][]] => {
+	return ['\\s[0]kind0 updated.', getTagsReply(event)];
 };
 
 const res_shanten = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
