@@ -75,7 +75,7 @@ const selectResponse = async (event: NostrEvent, signer: Signer): Promise<EventT
 			tags: [],
 			created_at: event.created_at + 1,
 		};
-		switch (signer.getPublicKey()) {
+		switch (nip19.npubEncode(signer.getPublicKey())) {
 			case 'npub1rnrnclxznfkqqu8nnpt0mwp4hj0xe005mnwjqlafaluv7n2kn80sy53aq2':
 				kind0 = kind0_rinrin;
 				break;
