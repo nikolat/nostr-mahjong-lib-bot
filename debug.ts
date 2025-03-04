@@ -6,7 +6,7 @@ import { getResponseEvent } from './src/response';
 
 const main = async () => {
 	const text = await fs.readFile('./test/fixtures/input.json', {
-		encoding: 'utf8',
+		encoding: 'utf8'
 	});
 	const json = JSON.parse(text);
 	const event_req: NostrEvent = json;

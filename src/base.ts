@@ -15,8 +15,8 @@ export const base = async (rawBody: string, signer: Signer) => {
 		return new Response(body, {
 			status: 400,
 			headers: {
-				'content-type': 'application/json; charset=utf-8',
-			},
+				'content-type': 'application/json; charset=utf-8'
+			}
 		});
 	}
 	if (!validateEvent(requestEvent)) {
@@ -24,8 +24,8 @@ export const base = async (rawBody: string, signer: Signer) => {
 		return new Response(body, {
 			status: 400,
 			headers: {
-				'content-type': 'application/json; charset=utf-8',
-			},
+				'content-type': 'application/json; charset=utf-8'
+			}
 		});
 	}
 	if (verifyInputEvent && !verifyEvent(requestEvent)) {
@@ -33,8 +33,8 @@ export const base = async (rawBody: string, signer: Signer) => {
 		return new Response(body, {
 			status: 400,
 			headers: {
-				'content-type': 'application/json; charset=utf-8',
-			},
+				'content-type': 'application/json; charset=utf-8'
+			}
 		});
 	}
 	//出力イベントを取得
@@ -52,14 +52,14 @@ export const base = async (rawBody: string, signer: Signer) => {
 		return new Response(body, {
 			status: 400,
 			headers: {
-				'content-type': 'application/json; charset=utf-8',
-			},
+				'content-type': 'application/json; charset=utf-8'
+			}
 		});
 	}
 	//出力
 	if (responseEvent === null) {
 		return new Response(null, {
-			status: 204,
+			status: 204
 		});
 	}
 	const res = responseEvent.length > 1 ? responseEvent : responseEvent.at(0);
@@ -68,7 +68,7 @@ export const base = async (rawBody: string, signer: Signer) => {
 	return new Response(body, {
 		status: 200,
 		headers: {
-			'content-type': 'application/json; charset=utf-8',
-		},
+			'content-type': 'application/json; charset=utf-8'
+		}
 	});
 };

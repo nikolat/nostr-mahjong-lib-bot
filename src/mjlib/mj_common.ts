@@ -68,7 +68,10 @@ export const addHai = (tehai: string, hai: string): string => {
 	const [arTehaiBaseNormal, hai_furo, hai_ankan] = stringToArrayWithFuro(tehai);
 	const arTehaiNewNormal = arTehaiBaseNormal.concat(hai);
 	arTehaiNewNormal.sort(compareFn);
-	const strTehaiNew = arTehaiNewNormal.join('') + hai_furo.map((h) => `<${h}>`).join('') + hai_ankan.map((h) => `(${h})`).join('');
+	const strTehaiNew =
+		arTehaiNewNormal.join('') +
+		hai_furo.map((h) => `<${h}>`).join('') +
+		hai_ankan.map((h) => `(${h})`).join('');
 	return strTehaiNew;
 };
 
@@ -143,7 +146,7 @@ export const paikind = [
 	'4z',
 	'5z',
 	'6z',
-	'7z',
+	'7z'
 ];
 
 export const compareFn = (a: string, b: string) => {
@@ -199,7 +202,7 @@ const doraConvert = (hai: string): string => {
 		['4z', '1z'],
 		['5z', '6z'],
 		['6z', '7z'],
-		['7z', '5z'],
+		['7z', '5z']
 	]);
 	return d.get(hai) ?? '';
 };

@@ -5,7 +5,7 @@ import {
 	removeElementByName,
 	stringArrayToNumArray,
 	stringToArrayWithFuro,
-	uniq,
+	uniq
 } from './mj_common.js';
 
 const SHANTEN_MAX = 99;
@@ -24,7 +24,11 @@ export const getShanten = (tehai: string): [number, string[]] => {
 };
 
 //シャンテン数の取得(役あり)
-export const getShantenYaku = (tehai: string, bafu_hai: string, jifu_hai: string): [number, Map<string, number>] => {
+export const getShantenYaku = (
+	tehai: string,
+	bafu_hai: string,
+	jifu_hai: string
+): [number, Map<string, number>] => {
 	const r_chitoitsu = getShantenChitoitsu(tehai);
 	const r_kokushimusou = getShantenKokushimusou(tehai);
 	const r_menzen = getShantenMenzen(tehai);
@@ -32,7 +36,15 @@ export const getShantenYaku = (tehai: string, bafu_hai: string, jifu_hai: string
 	const r_tanyao = getShantenTanyao(tehai);
 	const r_toitoi = getShantenToitoi(tehai);
 	const r_honitsu = getShantenHonitsu(tehai);
-	const r = Math.min(r_chitoitsu, r_kokushimusou, r_menzen, r_yakuhai, r_tanyao, r_toitoi, r_honitsu);
+	const r = Math.min(
+		r_chitoitsu,
+		r_kokushimusou,
+		r_menzen,
+		r_yakuhai,
+		r_tanyao,
+		r_toitoi,
+		r_honitsu
+	);
 	const yaku_info = new Map<string, number>();
 	yaku_info.set('七対子', r_chitoitsu);
 	yaku_info.set('国士無双', r_kokushimusou);
@@ -97,16 +109,33 @@ export const getShantenNormal = (tehai: string): [number, string[]] => {
 					count_mentsu += hai_ankan.length;
 					count_koritsu += koritsu_hai.length;
 					const has_atama = atama.length > 0;
-					const shanten_kouho: number = calcShanten(count_mentsu, count_tatsu, count_koritsu, has_atama);
+					const shanten_kouho: number = calcShanten(
+						count_mentsu,
+						count_tatsu,
+						count_koritsu,
+						has_atama
+					);
 					//シャンテン数が小さい方を選択
 					if (shanten_kouho < shanten) {
 						shanten = shanten_kouho;
 						ret_composition = [
-							makeCompositionString(atama, composition_man[jm], composition_pin[jp], composition_sou[js], composition_jihai[0]),
+							makeCompositionString(
+								atama,
+								composition_man[jm],
+								composition_pin[jp],
+								composition_sou[js],
+								composition_jihai[0]
+							)
 						];
 					} else if (shanten_kouho == shanten) {
 						ret_composition.push(
-							makeCompositionString(atama, composition_man[jm], composition_pin[jp], composition_sou[js], composition_jihai[0]),
+							makeCompositionString(
+								atama,
+								composition_man[jm],
+								composition_pin[jp],
+								composition_sou[js],
+								composition_jihai[0]
+							)
 						);
 					}
 				}
@@ -172,7 +201,12 @@ export const removeKoritsuHai = (haiArray: string[]): [string[], string[]] => {
 };
 
 //シャンテン数の計算
-const calcShanten = (count_mentsu: number, count_tatsu: number, count_koritsu: number, has_atama: boolean): number => {
+const calcShanten = (
+	count_mentsu: number,
+	count_tatsu: number,
+	count_koritsu: number,
+	has_atama: boolean
+): number => {
 	let c_mentsu = count_mentsu;
 	let c_tatsu = count_tatsu;
 	let c_koritsu = count_koritsu;
@@ -203,7 +237,7 @@ const makeCompositionString = (
 	composition_man: number[][],
 	composition_pin: number[][],
 	composition_sou: number[][],
-	composition_jihai: number[][],
+	composition_jihai: number[][]
 ): string => {
 	const ret_atama = atama + atama;
 	let ret_m = '';
@@ -257,7 +291,12 @@ const getComposition = (haiArray: string[]): number[][][] => {
 	let composition_a: number[][][] = [];
 	let composition_b: number[][][] = [];
 	let max: number[][];
-	[max, composition_a, composition_b] = getCompositionRecursion(hai_count_array, start, composition_a, composition_b);
+	[max, composition_a, composition_b] = getCompositionRecursion(
+		hai_count_array,
+		start,
+		composition_a,
+		composition_b
+	);
 	const ret: number[][][] = [...composition_a, ...composition_b];
 	return ret;
 };
@@ -267,7 +306,7 @@ const getCompositionRecursion = (
 	hai: number[],
 	n: number,
 	composition_a: number[][][],
-	composition_b: number[][][],
+	composition_b: number[][][]
 ): [number[][], number[][][], number[][][]] => {
 	let max: number[][];
 	let ret_a: number[][][];
@@ -275,7 +314,9 @@ const getCompositionRecursion = (
 	//面子の抜き取りが終わったら搭子/対子の数を数える
 	if (n > 9) {
 		const start = 1;
-		const [count_tatsu, ret_tatsu_and_koritsu] = getTatsuAndKoritsu(structuredClone(hai), start, [[]]);
+		const [count_tatsu, ret_tatsu_and_koritsu] = getTatsuAndKoritsu(structuredClone(hai), start, [
+			[]
+		]);
 		ret_a = [];
 		ret_b = [];
 		for (const tkelm of ret_tatsu_and_koritsu) {
@@ -298,7 +339,7 @@ const getCompositionRecursion = (
 		}
 		max = [
 			[0, count_tatsu],
-			[0, count_tatsu],
+			[0, count_tatsu]
 		];
 		return [max, ret_a, ret_b];
 	}
@@ -308,7 +349,7 @@ const getCompositionRecursion = (
 		structuredClone(hai),
 		n + 1,
 		structuredClone(composition_a),
-		structuredClone(composition_b),
+		structuredClone(composition_b)
 	); //仮の最適値とする
 
 	//順子抜き取り
@@ -331,7 +372,7 @@ const getCompositionRecursion = (
 			structuredClone(hai),
 			n,
 			structuredClone(ret_a_shuntsu),
-			structuredClone(ret_b_shuntsu),
+			structuredClone(ret_b_shuntsu)
 		); //抜き取ったら同じ位置でもう一度試行
 		hai[n]++;
 		hai[n + 1]++;
@@ -375,7 +416,7 @@ const getCompositionRecursion = (
 			structuredClone(hai),
 			n,
 			structuredClone(ret_a_kotsu),
-			structuredClone(ret_b_kotsu),
+			structuredClone(ret_b_kotsu)
 		); //抜き取ったら同じ位置でもう一度試行
 		hai[n] += 3;
 		r[0][0]++;
@@ -402,7 +443,11 @@ const getCompositionRecursion = (
 };
 
 //塔子/対子・孤立牌(数牌)の再帰的取得
-const getTatsuAndKoritsu = (hai: number[], n: number, ret_tatsu_and_koritsu: number[][][]): [number, number[][][]] => {
+const getTatsuAndKoritsu = (
+	hai: number[],
+	n: number,
+	ret_tatsu_and_koritsu: number[][][]
+): [number, number[][][]] => {
 	let max: number;
 	let ret: number[][][];
 	//搭子/対子の抜き取りが終わったら孤立牌を加える
@@ -425,7 +470,11 @@ const getTatsuAndKoritsu = (hai: number[], n: number, ret_tatsu_and_koritsu: num
 	}
 
 	//まずは塔子/対子を抜かず位置を1つ進め試行
-	[max, ret] = getTatsuAndKoritsu(structuredClone(hai), n + 1, structuredClone(ret_tatsu_and_koritsu)); //仮の最適値とする
+	[max, ret] = getTatsuAndKoritsu(
+		structuredClone(hai),
+		n + 1,
+		structuredClone(ret_tatsu_and_koritsu)
+	); //仮の最適値とする
 
 	//嵌張抜き取り
 	if (n <= 7 && hai[n] > 0 && hai[n + 2] > 0) {
@@ -515,7 +564,7 @@ const getCompositionJihai = (hai: string[]): number[][][] => {
 		hai_num = removeElementByName(
 			hai_num.map((h) => String(h)),
 			String(n),
-			3,
+			3
 		).map((h) => Number.parseInt(h));
 	}
 	const toitsu: number[] = getToitsu(hai_num.map((h) => String(h))).map((h) => Number.parseInt(h));

@@ -29,8 +29,8 @@ export default {
 				status: 405,
 				headers: {
 					'content-type': 'application/json; charset=utf-8',
-					Allow: 'POST',
-				},
+					Allow: 'POST'
+				}
 			});
 		}
 		if (request.body) {
@@ -52,8 +52,8 @@ export default {
 					return new Response(body, {
 						status: 404,
 						headers: {
-							'content-type': 'application/json; charset=utf-8',
-						},
+							'content-type': 'application/json; charset=utf-8'
+						}
 					});
 			}
 			if (nsec === undefined) {
@@ -61,8 +61,8 @@ export default {
 				return new Response(body, {
 					status: 500,
 					headers: {
-						'content-type': 'application/json; charset=utf-8',
-					},
+						'content-type': 'application/json; charset=utf-8'
+					}
 				});
 			}
 			const dr = nip19.decode(nsec);
@@ -71,8 +71,8 @@ export default {
 				return new Response(body, {
 					status: 500,
 					headers: {
-						'content-type': 'application/json; charset=utf-8',
-					},
+						'content-type': 'application/json; charset=utf-8'
+					}
 				});
 			}
 			const seckey = dr.data;
@@ -84,9 +84,9 @@ export default {
 			return new Response(body, {
 				status: 400,
 				headers: {
-					'content-type': 'application/json; charset=utf-8',
-				},
+					'content-type': 'application/json; charset=utf-8'
+				}
 			});
 		}
-	},
+	}
 } satisfies ExportedHandler<Env>;

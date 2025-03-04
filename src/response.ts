@@ -6,7 +6,10 @@ import { getScore } from './mjlib/mj_score';
 import { getMachi } from './mjlib/mj_machi';
 import { getShanten } from './mjlib/mj_shanten';
 
-export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer): Promise<VerifiedEvent[] | null> => {
+export const getResponseEvent = async (
+	requestEvent: NostrEvent,
+	signer: Signer
+): Promise<VerifiedEvent[] | null> => {
 	if (requestEvent.pubkey === signer.getPublicKey()) {
 		//自分自身の投稿には反応しない
 		return null;
@@ -20,7 +23,10 @@ export const getResponseEvent = async (requestEvent: NostrEvent, signer: Signer)
 	return events;
 };
 
-const selectResponse = async (event: NostrEvent, signer: Signer): Promise<EventTemplate[] | null> => {
+const selectResponse = async (
+	event: NostrEvent,
+	signer: Signer
+): Promise<EventTemplate[] | null> => {
 	if (!isAllowedToPost(event)) {
 		return null;
 	}
@@ -39,11 +45,11 @@ const selectResponse = async (event: NostrEvent, signer: Signer): Promise<EventT
 				nip05: 'rinrin@nikolat.github.io',
 				picture: 'https://nikolat.github.io/avatar/rinrin.png',
 				website: 'https://github.com/nikolat/jong-rinrin',
-				lud16: 'nikolat@coinos.io',
+				lud16: 'nikolat@coinos.io'
 			}),
 			kind: 0,
 			tags: [],
-			created_at: event.created_at + 1,
+			created_at: event.created_at + 1
 		};
 		const kind0_chunchun: EventTemplate = {
 			content: JSON.stringify({
@@ -54,11 +60,11 @@ const selectResponse = async (event: NostrEvent, signer: Signer): Promise<EventT
 				nip05: 'chunchun@nikolat.github.io',
 				picture: 'https://nikolat.github.io/avatar/chunchun.png',
 				website: 'https://github.com/nikolat/jong-chunchun',
-				lud16: 'nikolat@coinos.io',
+				lud16: 'nikolat@coinos.io'
 			}),
 			kind: 0,
 			tags: [],
-			created_at: event.created_at + 1,
+			created_at: event.created_at + 1
 		};
 		const kind0_whanwhan: EventTemplate = {
 			content: JSON.stringify({
@@ -69,11 +75,11 @@ const selectResponse = async (event: NostrEvent, signer: Signer): Promise<EventT
 				nip05: 'whanwhan@nikolat.github.io',
 				picture: 'https://nikolat.github.io/avatar/whanwhan.png',
 				website: 'https://github.com/nikolat/jong-whanwhan',
-				lud16: 'nikolat@coinos.io',
+				lud16: 'nikolat@coinos.io'
 			}),
 			kind: 0,
 			tags: [],
-			created_at: event.created_at + 1,
+			created_at: event.created_at + 1
 		};
 		switch (nip19.npubEncode(signer.getPublicKey())) {
 			case 'npub1rnrnclxznfkqqu8nnpt0mwp4hj0xe005mnwjqlafaluv7n2kn80sy53aq2':
@@ -99,10 +105,10 @@ const isAllowedToPost = (event: NostrEvent) => {
 		'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', //Nostr麻雀開発部
 		'8206e76969256cd33277eeb00a45e445504dfb321788b5c3cc5d23b561765a74', //うにゅうハウス開発
 		'330fc57e48e39427dd5ea555b0741a3f715a55e10f8bb6616c27ec92ebc5e64b', //カスタム絵文字の川
-		'5b0703f5add2bb9e636bcae1ef7870ba6a591a93b6b556aca0f14b0919006598', //₍ ﾃｽﾄ ₎
+		'5b0703f5add2bb9e636bcae1ef7870ba6a591a93b6b556aca0f14b0919006598' //₍ ﾃｽﾄ ₎
 	];
 	const disallowedNpubs = [
-		'npub1j0ng5hmm7mf47r939zqkpepwekenj6uqhd5x555pn80utevvavjsfgqem2', //雀卓
+		'npub1j0ng5hmm7mf47r939zqkpepwekenj6uqhd5x555pn80utevvavjsfgqem2' //雀卓
 	];
 	if (disallowedNpubs.includes(nip19.npubEncode(event.pubkey))) {
 		return false;
@@ -114,7 +120,9 @@ const isAllowedToPost = (event: NostrEvent) => {
 	if (event.kind === 1) {
 		return true;
 	} else if (event.kind === 42) {
-		const tagRoot = event.tags.find((tag) => tag.length >= 4 && tag[0] === 'e' && tag[3] === 'root');
+		const tagRoot = event.tags.find(
+			(tag) => tag.length >= 4 && tag[0] === 'e' && tag[3] === 'root'
+		);
 		if (tagRoot !== undefined) {
 			return allowedChannel.includes(tagRoot[1]);
 		} else {
@@ -124,12 +132,21 @@ const isAllowedToPost = (event: NostrEvent) => {
 	throw new TypeError(`kind ${event.kind} is not supported`);
 };
 
-const getResmap = (): [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] => {
-	const resmapReply: [RegExp, (event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]][] = [
+const getResmap = (): [
+	RegExp,
+	(event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]
+][] => {
+	const resmapReply: [
+		RegExp,
+		(event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]
+	][] = [
 		[/\\s\[0\]$/, res_surface0],
 		[/shanten\s(([<>()0-9mpsz]){2,44})$/, res_shanten],
-		[/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/, res_score],
-		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi],
+		[
+			/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/,
+			res_score
+		],
+		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi]
 	];
 	return resmapReply;
 };
@@ -154,7 +171,9 @@ const getTagsReply = (event: NostrEvent): string[][] => {
 	} else {
 		tagsReply.push(['e', event.id, '', 'root', event.pubkey]);
 	}
-	for (const tag of event.tags.filter((tag) => tag.length >= 2 && tag[0] === 'p' && tag[1] !== event.pubkey)) {
+	for (const tag of event.tags.filter(
+		(tag) => tag.length >= 2 && tag[0] === 'p' && tag[1] !== event.pubkey
+	)) {
 		tagsReply.push(tag);
 	}
 	tagsReply.push(['p', event.pubkey]);
@@ -281,7 +300,7 @@ const getEmojiUrl = (pai: string): string => {
 	return awayuki_mahjong_emojis[convertEmoji(pai)];
 };
 
-const awayuki_mahjong_emojis: any = {
+const awayuki_mahjong_emojis: { [shortcode: string]: string } = {
 	mahjong_m1: 'https://awayuki.github.io/emoji/mahjong-m1.png',
 	mahjong_m2: 'https://awayuki.github.io/emoji/mahjong-m2.png',
 	mahjong_m3: 'https://awayuki.github.io/emoji/mahjong-m3.png',
@@ -315,5 +334,5 @@ const awayuki_mahjong_emojis: any = {
 	mahjong_north: 'https://awayuki.github.io/emoji/mahjong-north.png',
 	mahjong_white: 'https://awayuki.github.io/emoji/mahjong-white.png',
 	mahjong_green: 'https://awayuki.github.io/emoji/mahjong-green.png',
-	mahjong_red: 'https://awayuki.github.io/emoji/mahjong-red.png',
+	mahjong_red: 'https://awayuki.github.io/emoji/mahjong-red.png'
 };
