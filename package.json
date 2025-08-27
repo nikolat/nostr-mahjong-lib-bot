@@ -13,13 +13,13 @@
 		"format": "prettier --write ."
 	},
 	"dependencies": {
-		"nostr-tools": "^2.15.0"
+		"nostr-tools": "^2.16.2"
 	},
 	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.8.53",
-		"@cloudflare/workers-types": "^4.20250712.0",
+		"@cloudflare/vitest-pool-workers": "^0.8.67",
+		"@cloudflare/workers-types": "^4.20250826.0",
 		"prettier": "^3.6.2",
-		"typescript": "^5.8.3",
+		"typescript": "^5.9.2",
 		"vitest": "^3.2.4",
 		"wrangler": "^4.12.0"
 	}
