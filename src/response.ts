@@ -172,7 +172,7 @@ const isAllowedToPost = (event: NostrEvent) => {
 	if (disallowedNpubs.includes(nip19.npubEncode(event.pubkey))) {
 		return false;
 	}
-	const disallowedTags = ['content-warning', 'proxy'];
+	const disallowedTags = ['proxy'];
 	if (event.tags.some((tag: string[]) => tag.length >= 1 && disallowedTags.includes(tag[0]))) {
 		return false;
 	}
