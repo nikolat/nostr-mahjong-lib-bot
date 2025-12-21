@@ -286,7 +286,7 @@ const res_score = (
 	const bafu_hai = match[5] ?? '';
 	const jifu_hai = match[7] ?? '';
 	const dora_hai = match[8] ?? '';
-	const isTsumo = match[9] === '1';
+	const isTsumo = match[10] === '1';
 	const [shanten, composition] = getShanten(addHai(tehai, agari_hai));
 	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(agari_hai)}:`;
 	const tags = [...getTagsReply(event), ...getTagsEmoji(addHai(tehai, agari_hai))];
