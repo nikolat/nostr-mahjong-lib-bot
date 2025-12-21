@@ -1,4 +1,6 @@
 import type { EventTemplate, NostrEvent, VerifiedEvent } from 'nostr-tools/pure';
+import type { Filter } from 'nostr-tools/filter';
+import { Relay } from 'nostr-tools/relay';
 import * as nip19 from 'nostr-tools/nip19';
 import { Signer } from './utils';
 import { addHai, stringToArrayPlain } from './mjlib/mj_common';
@@ -191,11 +193,17 @@ const isAllowedToPost = (event: NostrEvent) => {
 
 const getResmap = (): [
 	RegExp,
-	(event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]
+	(
+		event: NostrEvent,
+		regstr: RegExp
+	) => Promise<[string, string[][]] | [string, string[][], number]> | [string, string[][]]
 ][] => {
 	const resmapReply: [
 		RegExp,
-		(event: NostrEvent, regstr: RegExp) => Promise<[string, string[][]]> | [string, string[][]]
+		(
+			event: NostrEvent,
+			regstr: RegExp
+		) => Promise<[string, string[][]] | [string, string[][], number]> | [string, string[][]]
 	][] = [
 		[/\\s\[0\]$/, res_surface0],
 		[/shanten\s(([<>()0-9mpsz]){2,44})$/, res_shanten],
@@ -203,7 +211,8 @@ const getResmap = (): [
 			/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/,
 			res_score
 		],
-		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi]
+		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi],
+		[/[1-9][0-9]{1,3}00$/, res_score_quiz_answer]
 	];
 	return resmapReply;
 };
@@ -212,8 +221,8 @@ const mode_reply = async (event: NostrEvent): Promise<EventTemplate | null> => {
 	const resmap = getResmap();
 	for (const [reg, func] of resmap) {
 		if (reg.test(event.content)) {
-			const [content, tags] = await func(event, reg);
-			return { content, kind: event.kind, tags, created_at: event.created_at + 1 };
+			const [content, tags, kind] = await func(event, reg);
+			return { content, kind: kind ?? event.kind, tags, created_at: event.created_at + 1 };
 		}
 	}
 	return null;
@@ -235,6 +244,15 @@ const getTagsReply = (event: NostrEvent): string[][] => {
 	}
 	tagsReply.push(['p', event.pubkey]);
 	return tagsReply;
+};
+
+const getTagsFav = (event: NostrEvent): string[][] => {
+	const tagsFav: string[][] = [
+		['e', event.id, '', event.pubkey],
+		['p', event.pubkey],
+		['k', String(event.kind)]
+	];
+	return tagsFav;
 };
 
 const res_surface0 = (event: NostrEvent): [string, string[][]] => {
@@ -321,6 +339,77 @@ const res_machi = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
 	return [content, tags];
 };
 
+const getEvent = (relayUrl: string, filters: Filter[]): Promise<NostrEvent | undefined> => {
+	return new Promise(async (resolve, reject) => {
+		let relay: Relay;
+		try {
+			relay = await Relay.connect(relayUrl);
+		} catch (error) {
+			reject(error);
+			return;
+		}
+		let r: NostrEvent | undefined;
+		const onevent = (ev: NostrEvent) => {
+			if (r === undefined || r.created_at < ev.created_at) {
+				r = ev;
+			}
+		};
+		const oneose = () => {
+			sub.close();
+			relay.close();
+			resolve(r);
+		};
+		const sub = relay.subscribe(filters, { onevent, oneose });
+	});
+};
+
+const res_score_quiz_answer = async (
+	event: NostrEvent,
+	regstr: RegExp
+): Promise<[string, string[][]] | [string, string[][], number]> => {
+	const match = event.content.match(regstr);
+	if (match === null) {
+		throw new Error();
+	}
+	const score_answer = parseInt(match[0]);
+	const relay = 'wss://yabu.me/';
+	const tagsE: string[][] = event.tags.filter((tag) => tag[0] === 'e');
+	const id_replied: string | undefined = (
+		tagsE.find((tag) => tag[3] === 'reply') ?? tagsE.find((tag) => tag[3] === 'root')
+	)?.at(1);
+	if (id_replied === undefined) {
+		return ['リプライ先イベントを正しく指定してください', getTagsReply(event)];
+	}
+	const event_quiz: NostrEvent | undefined = await getEvent(relay, [{ ids: [id_replied] }]);
+	if (event_quiz === undefined) {
+		return ['点数計算問題が取得できません', getTagsReply(event)];
+	}
+	const event_quiz_content = event_quiz.content.replaceAll(/:(mahjong_.+?):/g, (content, emoji) =>
+		convertPai(emoji)
+	);
+	const match_quiz = event_quiz_content.match(
+		/点数計算問題 (東|南|西|北)場 (東|南|西|北)家 (ツモ|ロン)\n([1-9mpsz]{26}) ([1-9][mpsz])$/
+	);
+	if (match_quiz === null) {
+		throw new Error();
+	}
+	const tehai = match_quiz[4];
+	const agari_hai = match_quiz[5];
+	const kaze = ['東', '南', '西', '北'];
+	const isTsumo = match_quiz[3] === 'ツモ';
+	const bafu_hai = `${kaze.indexOf(match_quiz[1]) + 1}z`;
+	const jifu_hai = `${kaze.indexOf(match_quiz[2]) + 1}z`;
+	const r = getScore(tehai, agari_hai, bafu_hai, jifu_hai, undefined, isTsumo);
+	const score_correct = r[0];
+	let content: string;
+	if (score_answer === score_correct) {
+		content = '⭕';
+	} else {
+		content = '❌';
+	}
+	return [content, getTagsFav(event), 7];
+};
+
 const getTagsEmoji = (tehai: string): string[][] => {
 	const pi = stringToArrayPlain(tehai);
 	return Array.from(new Set(pi)).map((pi) => getEmojiTag(pi));
@@ -354,6 +443,31 @@ const convertEmoji = (pai: string) => {
 		}
 	} else {
 		throw TypeError(`Unknown pai: ${pai}`);
+	}
+};
+
+const convertPai = (emoji: string) => {
+	if (['m', 'p', 's'].includes(emoji.at(-2) ?? '')) {
+		return `${emoji.at(-1)}${emoji.at(-2)}`;
+	} else {
+		switch (emoji) {
+			case 'mahjong_east':
+				return '1z';
+			case 'mahjong_south':
+				return '2z';
+			case 'mahjong_west':
+				return '3z';
+			case 'mahjong_north':
+				return '4z';
+			case 'mahjong_white':
+				return '5z';
+			case 'mahjong_green':
+				return '6z';
+			case 'mahjong_red':
+				return '7z';
+			default:
+				throw TypeError(`Unknown emoji: ${emoji}`);
+		}
 	}
 };
 
