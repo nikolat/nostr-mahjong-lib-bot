@@ -23,70 +23,77 @@ export interface Env {
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		if (request.method !== 'POST') {
-			const body = JSON.stringify({ error: 'Method Not Allowed' });
-			return new Response(body, {
-				status: 405,
-				headers: {
-					'content-type': 'application/json; charset=utf-8',
-					Allow: 'POST'
-				}
-			});
-		}
-		if (request.body) {
-			const body = await request.text();
-			const url = new URL(request.url);
-			let nsec: string | undefined;
-			switch (url.pathname) {
-				case '/rinrin':
-					nsec = env.NOSTR_PRIVATE_KEY_RINRIN;
-					break;
-				case '/chunchun':
-					nsec = env.NOSTR_PRIVATE_KEY_CHUNCHUN;
-					break;
-				case '/whanwhan':
-					nsec = env.NOSTR_PRIVATE_KEY_WHANWHAN;
-					break;
-				default:
-					const body = JSON.stringify({ error: '404 not found' });
+		switch (request.method) {
+			case 'GET':
+			case 'POST': {
+				if (request.method === 'POST' && request.body === null) {
+					const body = JSON.stringify({ error: 'message body is not found' });
 					return new Response(body, {
-						status: 404,
+						status: 400,
 						headers: {
 							'content-type': 'application/json; charset=utf-8'
 						}
 					});
-			}
-			if (nsec === undefined) {
-				const body = JSON.stringify({ error: 'NOSTR_PRIVATE_KEY is undefined' });
-				return new Response(body, {
-					status: 500,
-					headers: {
-						'content-type': 'application/json; charset=utf-8'
-					}
-				});
-			}
-			const dr = nip19.decode(nsec);
-			if (dr.type !== 'nsec') {
-				const body = JSON.stringify({ error: 'NOSTR_PRIVATE_KEY is not `nsec`' });
-				return new Response(body, {
-					status: 500,
-					headers: {
-						'content-type': 'application/json; charset=utf-8'
-					}
-				});
-			}
-			const seckey = dr.data;
-			const signer = new Signer(seckey);
-
-			return await base(body, signer);
-		} else {
-			const body = JSON.stringify({ error: 'message body is not found' });
-			return new Response(body, {
-				status: 400,
-				headers: {
-					'content-type': 'application/json; charset=utf-8'
 				}
-			});
+				const url = new URL(request.url);
+				let nsec: string | undefined;
+				switch (url.pathname) {
+					case '/rinrin':
+						nsec = env.NOSTR_PRIVATE_KEY_RINRIN;
+						break;
+					case '/chunchun':
+						nsec = env.NOSTR_PRIVATE_KEY_CHUNCHUN;
+						break;
+					case '/whanwhan':
+						nsec = env.NOSTR_PRIVATE_KEY_WHANWHAN;
+						break;
+					default:
+						const body = JSON.stringify({ error: '404 not found' });
+						return new Response(body, {
+							status: 404,
+							headers: {
+								'content-type': 'application/json; charset=utf-8'
+							}
+						});
+				}
+				if (nsec === undefined) {
+					const body = JSON.stringify({ error: 'NOSTR_PRIVATE_KEY is undefined' });
+					return new Response(body, {
+						status: 500,
+						headers: {
+							'content-type': 'application/json; charset=utf-8'
+						}
+					});
+				}
+				const dr = nip19.decode(nsec);
+				if (dr.type !== 'nsec') {
+					const body = JSON.stringify({ error: 'NOSTR_PRIVATE_KEY is not `nsec`' });
+					return new Response(body, {
+						status: 500,
+						headers: {
+							'content-type': 'application/json; charset=utf-8'
+						}
+					});
+				}
+				const seckey = dr.data;
+				const signer = new Signer(seckey);
+				let body: string | undefined;
+				if (request.method === 'POST') {
+					body = await request.text();
+				}
+				const res: Response = await base(body, signer);
+				return res;
+			}
+			default: {
+				const body = JSON.stringify({ error: 'Method Not Allowed' });
+				return new Response(body, {
+					status: 405,
+					headers: {
+						'content-type': 'application/json; charset=utf-8',
+						Allow: 'POST'
+					}
+				});
+			}
 		}
 	}
 } satisfies ExportedHandler<Env>;

@@ -5,22 +5,57 @@ import { addHai, stringToArrayPlain } from './mjlib/mj_common';
 import { getScore } from './mjlib/mj_score';
 import { getMachi } from './mjlib/mj_machi';
 import { getShanten } from './mjlib/mj_shanten';
+import { HANDS } from './mahjong-hand-guessing-game/hands';
 
 export const getResponseEvent = async (
-	requestEvent: NostrEvent,
+	requestEvent: NostrEvent | undefined,
 	signer: Signer
 ): Promise<VerifiedEvent[] | null> => {
-	if (requestEvent.pubkey === signer.getPublicKey()) {
+	if (requestEvent?.pubkey === signer.getPublicKey()) {
 		//自分自身の投稿には反応しない
 		return null;
 	}
-	const res = await selectResponse(requestEvent, signer);
+	let res: EventTemplate[] | null;
+	if (requestEvent === undefined) {
+		res = selectGetResponse();
+	} else {
+		res = await selectResponse(requestEvent, signer);
+	}
 	if (res === null) {
 		//反応しないことを選択
 		return null;
 	}
 	const events = res.map((r) => signer.finishEvent(r));
 	return events;
+};
+
+const selectGetResponse = (): EventTemplate[] => {
+	const r = Math.floor(Math.random() * HANDS.length);
+	const hand: string = HANDS[r];
+	const regstr = /(([1-9][mpsz]){13})(\+?)([1-9][mpsz])\+([1-4])([1-4])/;
+	const match = hand.match(regstr);
+	if (match === null) {
+		throw new Error();
+	}
+	const tehai = match[1];
+	const agari_hai = match[4];
+	const kaze = ['東', '南', '西', '北'];
+	const tsumo_ron = match[3] === '+' ? 'ツモ' : 'ロン';
+	const ba = kaze[parseInt(match[5]) - 1];
+	const ie = kaze[parseInt(match[6]) - 1];
+	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(agari_hai)}:`;
+	const tags: string[][] = [
+		['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root'],
+		...getTagsEmoji(addHai(tehai, agari_hai))
+	];
+	const content = `点数計算問題 ${ba}場 ${ie}家 ${tsumo_ron}\n${paishi}`;
+	const et: EventTemplate = {
+		content,
+		tags,
+		kind: 42,
+		created_at: Math.floor(Date.now() / 1000)
+	};
+	return [et];
 };
 
 const selectResponse = async (
