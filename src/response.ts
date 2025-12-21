@@ -69,7 +69,7 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	const eventQuiz: VerifiedEvent = signer.finishEvent(evtQuiz);
 	const [contentAnswer, tagsAnswer] = res_score(
 		eventQuiz,
-		/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/,
+		/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?\s?([0-9][mpsz])?(\s([01]))?$/,
 		`score ${tehai} ${agari_hai} ${bafu_hai} ${jifu_hai}`
 	);
 	const evtAnswer: EventTemplate = {
@@ -208,7 +208,7 @@ const getResmap = (): [
 		[/\\s\[0\]$/, res_surface0],
 		[/shanten\s(([<>()0-9mpsz]){2,44})$/, res_shanten],
 		[
-			/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/,
+			/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?\s?([0-9][mpsz])?(\s([01]))?$/,
 			res_score
 		],
 		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi],
@@ -285,6 +285,8 @@ const res_score = (
 	const agari_hai = match[3];
 	const bafu_hai = match[5] ?? '';
 	const jifu_hai = match[7] ?? '';
+	const dora_hai = match[8] ?? '';
+	const isTsumo = match[9] === '1';
 	const [shanten, composition] = getShanten(addHai(tehai, agari_hai));
 	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(agari_hai)}:`;
 	const tags = [...getTagsReply(event), ...getTagsEmoji(addHai(tehai, agari_hai))];
@@ -292,7 +294,7 @@ const res_score = (
 		const content = `${paishi}:\n和了れません`;
 		return [content, tags];
 	}
-	const r = getScore(tehai, agari_hai, bafu_hai, jifu_hai);
+	const r = getScore(tehai, agari_hai, bafu_hai, jifu_hai, dora_hai, isTsumo);
 	if (r[0] <= 0) {
 		const content = `${paishi}:\n役がありません`;
 		return [content, tags];
