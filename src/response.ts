@@ -16,20 +16,25 @@ export const getResponseEvent = async (
 		return null;
 	}
 	let res: EventTemplate[] | null;
+	let events: VerifiedEvent[];
 	if (requestEvent === undefined) {
-		res = selectGetResponse();
+		events = selectGetResponse(signer);
 	} else {
 		res = await selectResponse(requestEvent, signer);
+		if (res === null) {
+			//反応しないことを選択
+			return null;
+		}
+		events = res.map((r) => signer.finishEvent(r));
 	}
-	if (res === null) {
-		//反応しないことを選択
-		return null;
-	}
-	const events = res.map((r) => signer.finishEvent(r));
 	return events;
 };
 
-const selectGetResponse = (): EventTemplate[] => {
+const selectGetResponse = (signer: Signer): VerifiedEvent[] => {
+	return getScoreQuiz(signer);
+};
+
+const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	const r = Math.floor(Math.random() * HANDS.length);
 	const hand: string = HANDS[r];
 	const regstr = /(([1-9][mpsz]){13})(\+?)([1-9][mpsz])\+([1-4])([1-4])/;
@@ -41,21 +46,38 @@ const selectGetResponse = (): EventTemplate[] => {
 	const agari_hai = match[4];
 	const kaze = ['東', '南', '西', '北'];
 	const tsumo_ron = match[3] === '+' ? 'ツモ' : 'ロン';
-	const ba = kaze[parseInt(match[5]) - 1];
-	const ie = kaze[parseInt(match[6]) - 1];
+	const nBa = parseInt(match[5]);
+	const nJi = parseInt(match[6]);
+	const ba = kaze[nBa - 1];
+	const ie = kaze[nJi - 1];
+	const bafu_hai = `${nBa}z`;
+	const jifu_hai = `${nJi}z`;
 	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(agari_hai)}:`;
 	const tags: string[][] = [
 		['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root'],
 		...getTagsEmoji(addHai(tehai, agari_hai))
 	];
 	const content = `点数計算問題 ${ba}場 ${ie}家 ${tsumo_ron}\n${paishi}`;
-	const et: EventTemplate = {
+	const evtQuiz: EventTemplate = {
 		content,
 		tags,
 		kind: 42,
 		created_at: Math.floor(Date.now() / 1000)
 	};
-	return [et];
+	const eventQuiz: VerifiedEvent = signer.finishEvent(evtQuiz);
+	const [contentAnswer, tagsAnswer] = res_score(
+		eventQuiz,
+		/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?$/,
+		`score ${tehai} ${agari_hai} ${bafu_hai} ${jifu_hai}`
+	);
+	const evtAnswer: EventTemplate = {
+		content: contentAnswer,
+		tags: [...tagsAnswer, ['content-warning', '解答']],
+		kind: evtQuiz.kind,
+		created_at: evtQuiz.created_at + 1
+	};
+	const eventAnswer: VerifiedEvent = signer.finishEvent(evtAnswer);
+	return [eventQuiz, eventAnswer];
 };
 
 const selectResponse = async (
@@ -232,8 +254,12 @@ const res_shanten = (event: NostrEvent, regstr: RegExp): [string, string[][]] =>
 	return [content, tags];
 };
 
-const res_score = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
-	const match = event.content.match(regstr);
+const res_score = (
+	event: NostrEvent,
+	regstr: RegExp,
+	event_content?: string
+): [string, string[][]] => {
+	const match = (event_content ?? event.content).match(regstr);
 	if (match === null) {
 		throw new Error();
 	}
