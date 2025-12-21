@@ -70,7 +70,7 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	const [contentAnswer, tagsAnswer] = res_score(
 		eventQuiz,
 		/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?\s?([0-9][mpsz])?(\s([01]))?$/,
-		`score ${tehai} ${agari_hai} ${bafu_hai} ${jifu_hai}  ${tsumo_ron === 'ツモ'}`
+		`score ${tehai} ${agari_hai} ${bafu_hai} ${jifu_hai}  ${tsumo_ron === 'ツモ' ? 1 : 0}`
 	);
 	const evtAnswer: EventTemplate = {
 		content: contentAnswer,
