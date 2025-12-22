@@ -3,7 +3,7 @@ import type { Filter } from 'nostr-tools/filter';
 import { Relay } from 'nostr-tools/relay';
 import * as nip19 from 'nostr-tools/nip19';
 import { Signer } from './utils';
-import { addHai, stringToArrayPlain } from './mjlib/mj_common';
+import { addHai, paikind, stringToArrayPlain } from './mjlib/mj_common';
 import { getScore } from './mjlib/mj_score';
 import { getMachi } from './mjlib/mj_machi';
 import { getShanten } from './mjlib/mj_shanten';
@@ -19,7 +19,10 @@ export const getResponseEvent = async (
 	}
 	let res: EventTemplate[] | null;
 	let events: VerifiedEvent[];
-	if (requestEvent === undefined) {
+	if (
+		requestEvent === undefined ||
+		(isAllowedToPost(requestEvent) && /^quiz score$/.test(requestEvent.content))
+	) {
 		events = selectGetResponse(signer);
 	} else {
 		res = await selectResponse(requestEvent, signer);
@@ -55,11 +58,12 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	const bafu_hai = `${nBa}z`;
 	const jifu_hai = `${nJi}z`;
 	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(agari_hai)}:`;
+	const dora = paikind[Math.floor(Math.random() * paikind.length)];
 	const tags: string[][] = [
 		['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root'],
-		...getTagsEmoji(addHai(tehai, agari_hai))
+		...getTagsEmoji(`${tehai}${agari_hai}${dora}`)
 	];
-	const content = `点数計算問題 ${ba}場 ${ie}家 ${tsumo_ron}\n${paishi}`;
+	const content = `点数計算問題 ${ba}場 ${ie}家 ドラ:${convertEmoji(dora)}: ${tsumo_ron}\n${paishi}`;
 	const evtQuiz: EventTemplate = {
 		content,
 		tags,
@@ -69,8 +73,8 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	const eventQuiz: VerifiedEvent = signer.finishEvent(evtQuiz);
 	const [contentAnswer, tagsAnswer] = res_score(
 		eventQuiz,
-		/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?\s?([0-9][mpsz])?(\s([01]))?$/,
-		`score ${tehai} ${agari_hai} ${bafu_hai} ${jifu_hai}  ${tsumo_ron === 'ツモ' ? 1 : 0}`
+		/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([1-4]z))?(\s([1-4]z))?\s?([0-9mpsz]+)?(\s([01]))?$/,
+		`score ${tehai} ${agari_hai} ${bafu_hai} ${jifu_hai} ${dora} ${tsumo_ron === 'ツモ' ? 1 : 0}`
 	);
 	const evtAnswer: EventTemplate = {
 		content: contentAnswer,
@@ -208,7 +212,7 @@ const getResmap = (): [
 		[/\\s\[0\]$/, res_surface0],
 		[/shanten\s(([<>()0-9mpsz]){2,44})$/, res_shanten],
 		[
-			/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([0-9][mpsz]))?(\s([0-9][mpsz]))?\s?([0-9][mpsz])?(\s([01]))?$/,
+			/score\s(([<>()0-9mpsz]){2,42})\s([0-9][mpsz])(\s([1-4]z))?(\s([1-4]z))?\s?([0-9mpsz]+)?(\s([01]))?$/,
 			res_score
 		],
 		[/machi\s(([<>()0-9mpsz]){2,42})$/, res_machi],
@@ -390,18 +394,19 @@ const res_score_quiz_answer = async (
 		convertPai(emoji)
 	);
 	const match_quiz = event_quiz_content.match(
-		/点数計算問題 (東|南|西|北)場 (東|南|西|北)家 (ツモ|ロン)\n([1-9mpsz]{26}) ([1-9][mpsz])$/
+		/点数計算問題 (東|南|西|北)場 (東|南|西|北)家 ドラ(.+?) (ツモ|ロン)\n([1-9mpsz]{26}) ([1-9][mpsz])$/
 	);
 	if (match_quiz === null) {
 		throw new Error();
 	}
-	const tehai = match_quiz[4];
-	const agari_hai = match_quiz[5];
+	const tehai = match_quiz[5];
+	const agari_hai = match_quiz[6];
 	const kaze = ['東', '南', '西', '北'];
-	const isTsumo = match_quiz[3] === 'ツモ';
+	const isTsumo = match_quiz[4] === 'ツモ';
 	const bafu_hai = `${kaze.indexOf(match_quiz[1]) + 1}z`;
 	const jifu_hai = `${kaze.indexOf(match_quiz[2]) + 1}z`;
-	const r = getScore(tehai, agari_hai, bafu_hai, jifu_hai, undefined, isTsumo);
+	const dora_hai = match_quiz[3];
+	const r = getScore(tehai, agari_hai, bafu_hai, jifu_hai, dora_hai, isTsumo);
 	const score_correct = r[0];
 	let content: string;
 	if (score_answer === score_correct) {
