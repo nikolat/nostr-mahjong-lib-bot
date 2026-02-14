@@ -3,11 +3,10 @@ import type { Filter } from 'nostr-tools/filter';
 import { Relay } from 'nostr-tools/relay';
 import * as nip19 from 'nostr-tools/nip19';
 import { Signer } from './utils';
-import { addHai, compareFn, paikind, removeHai, stringToArrayPlain } from './mjlib/mj_common';
+import { addHai, compareFn, paikind, stringToArrayPlain } from './mjlib/mj_common';
 import { getScore } from './mjlib/mj_score';
 import { getMachi } from './mjlib/mj_machi';
 import { getShanten } from './mjlib/mj_shanten';
-import { naniwokiru } from './mjlib/mj_ai';
 import { HANDS } from './mahjong-hand-guessing-game/hands';
 
 export const getResponseEvent = async (
@@ -141,7 +140,15 @@ const getMachiQuiz = (signer: Signer): VerifiedEvent[] => {
 		created_at: Math.floor(Date.now() / 1000)
 	};
 	const eventQuiz: VerifiedEvent = signer.finishEvent(evtQuiz);
-	return [eventQuiz];
+	const [contentAnswer, tagsAnswer] = res_machi(eventQuiz, /^(([1-9][mps]){13})$/, tehai);
+	const evtAnswer: EventTemplate = {
+		content: contentAnswer,
+		tags: [...tagsAnswer, ['content-warning', '解答']],
+		kind: evtQuiz.kind,
+		created_at: evtQuiz.created_at + 1
+	};
+	const eventAnswer: VerifiedEvent = signer.finishEvent(evtAnswer);
+	return [eventQuiz, eventAnswer];
 };
 
 const selectResponse = async (
@@ -380,8 +387,12 @@ const res_score = (
 	return [content, tags];
 };
 
-const res_machi = (event: NostrEvent, regstr: RegExp): [string, string[][]] => {
-	const match = event.content.match(regstr);
+const res_machi = (
+	event: NostrEvent,
+	regstr: RegExp,
+	event_content?: string
+): [string, string[][]] => {
+	const match = (event_content ?? event.content).match(regstr);
 	if (match === null) {
 		throw new Error();
 	}
