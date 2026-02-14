@@ -3,10 +3,11 @@ import type { Filter } from 'nostr-tools/filter';
 import { Relay } from 'nostr-tools/relay';
 import * as nip19 from 'nostr-tools/nip19';
 import { Signer } from './utils';
-import { addHai, paikind, stringToArrayPlain } from './mjlib/mj_common';
+import { addHai, compareFn, paikind, removeHai, stringToArrayPlain } from './mjlib/mj_common';
 import { getScore } from './mjlib/mj_score';
 import { getMachi } from './mjlib/mj_machi';
 import { getShanten } from './mjlib/mj_shanten';
+import { naniwokiru } from './mjlib/mj_ai';
 import { HANDS } from './mahjong-hand-guessing-game/hands';
 
 export const getResponseEvent = async (
@@ -94,7 +95,37 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 };
 
 const getMachiQuiz = (signer: Signer): VerifiedEvent[] => {
-	const hand: string = '1m1m1m2m3m4m5m6m7m8m9m9m9m';
+	const colors: string[] = ['m', 'p', 's'];
+	const r = Math.floor(Math.random() * colors.length);
+	const color: string = colors[r];
+	const shuffle = (array: string[]) => {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
+		return array;
+	};
+	const handBase: string[] = shuffle(
+		[1, 2, 3, 4, 5, 6, 7, 8, 9]
+			.map((n) => [n, n, n, n])
+			.flat()
+			.map((n) => `${n}${color}`)
+	);
+	const hand_shuffle = handBase.slice(0, 13);
+	hand_shuffle.sort(compareFn);
+	let hand: string = hand_shuffle.join('');
+	let [shanten, composition] = getShanten(hand);
+	let i: number = 13;
+	while (shanten > 0) {
+		const tsumo: string = handBase[i];
+		const sutehai: string = naniwokiru(hand, tsumo, '', '1z', '1z', '1z', [], [], '');
+		hand = addHai(removeHai(hand, sutehai), tsumo);
+		[shanten, composition] = getShanten(hand);
+		i++;
+		if (i > handBase.length) {
+			throw new Error();
+		}
+	}
 	const regstr = /([1-9][mps]){13}/;
 	const match = hand.match(regstr);
 	if (match === null) {
