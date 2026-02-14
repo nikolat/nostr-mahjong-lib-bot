@@ -105,26 +105,22 @@ const getMachiQuiz = (signer: Signer): VerifiedEvent[] => {
 		}
 		return array;
 	};
-	const handBase: string[] = shuffle(
+	let handBase: string[] = shuffle(
 		[1, 2, 3, 4, 5, 6, 7, 8, 9]
 			.map((n) => [n, n, n, n])
 			.flat()
 			.map((n) => `${n}${color}`)
 	);
-	const hand_shuffle = handBase.slice(0, 13);
+	let hand_shuffle = handBase.slice(0, 13);
 	hand_shuffle.sort(compareFn);
 	let hand: string = hand_shuffle.join('');
 	let [shanten, composition] = getShanten(hand);
-	let i: number = 13;
 	while (shanten > 0) {
-		const tsumo: string = handBase[i];
-		const sutehai: string = naniwokiru(hand, tsumo, '', '1z', '1z', '1z', [], [], '');
-		hand = addHai(removeHai(hand, sutehai), tsumo);
+		handBase = shuffle(handBase);
+		hand_shuffle = handBase.slice(0, 13);
+		hand_shuffle.sort(compareFn);
+		hand = hand_shuffle.join('');
 		[shanten, composition] = getShanten(hand);
-		i++;
-		if (i > handBase.length) {
-			throw new Error();
-		}
 	}
 	const regstr = /([1-9][mps]){13}/;
 	const match = hand.match(regstr);
