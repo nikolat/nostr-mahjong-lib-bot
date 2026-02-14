@@ -18,10 +18,10 @@ export const getResponseEvent = async (
 		return null;
 	}
 	let res: EventTemplate[] | null;
-	let events: VerifiedEvent[];
+	let events: VerifiedEvent[] | null;
 	if (
 		requestEvent === undefined ||
-		(isAllowedToPost(requestEvent) && /^quiz score$/.test(requestEvent.content))
+		(isAllowedToPost(requestEvent) && /^quiz$/.test(requestEvent.content))
 	) {
 		events = selectGetResponse(signer);
 	} else {
@@ -35,8 +35,15 @@ export const getResponseEvent = async (
 	return events;
 };
 
-const selectGetResponse = (signer: Signer): VerifiedEvent[] => {
-	return getScoreQuiz(signer);
+const selectGetResponse = (signer: Signer): VerifiedEvent[] | null => {
+	switch (nip19.npubEncode(signer.getPublicKey())) {
+		case 'npub1rnrnclxznfkqqu8nnpt0mwp4hj0xe005mnwjqlafaluv7n2kn80sy53aq2':
+			return getScoreQuiz(signer);
+		case 'npub1chunacswmcejn8ge95vzl22a2g6pd4nfchygslnt9gj9dshqcvqq5amrlj':
+			return getMachiQuiz(signer);
+		default:
+			return null;
+	}
 };
 
 const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
@@ -84,6 +91,30 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	};
 	const eventAnswer: VerifiedEvent = signer.finishEvent(evtAnswer);
 	return [eventQuiz, eventAnswer];
+};
+
+const getMachiQuiz = (signer: Signer): VerifiedEvent[] => {
+	const hand: string = '1m1m1m2m3m4m5m6m7m8m9m9m9m';
+	const regstr = /([1-9][mps]){13}/;
+	const match = hand.match(regstr);
+	if (match === null) {
+		throw new Error();
+	}
+	const tehai = match[0];
+	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
+	const content = `清一色待ち問題\n${paishi}`;
+	const tags: string[][] = [
+		['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root'],
+		...getTagsEmoji(tehai)
+	];
+	const evtQuiz: EventTemplate = {
+		content,
+		tags,
+		kind: 42,
+		created_at: Math.floor(Date.now() / 1000)
+	};
+	const eventQuiz: VerifiedEvent = signer.finishEvent(evtQuiz);
+	return [eventQuiz];
 };
 
 const selectResponse = async (
