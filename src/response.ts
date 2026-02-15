@@ -233,7 +233,8 @@ const isAllowedToPost = (event: NostrEvent) => {
 		'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', //Nostr麻雀開発部
 		'8206e76969256cd33277eeb00a45e445504dfb321788b5c3cc5d23b561765a74', //うにゅうハウス開発
 		'330fc57e48e39427dd5ea555b0741a3f715a55e10f8bb6616c27ec92ebc5e64b', //カスタム絵文字の川
-		'5b0703f5add2bb9e636bcae1ef7870ba6a591a93b6b556aca0f14b0919006598' //₍ ﾃｽﾄ ₎
+		'5b0703f5add2bb9e636bcae1ef7870ba6a591a93b6b556aca0f14b0919006598', //₍ ﾃｽﾄ ₎
+		'33c4d8c5c5c9bc7c827593cb602697777e53e2e82855fa09f4cbc7f8e7164000' //雀魂
 	];
 	const disallowedNpubs = [
 		'npub1j0ng5hmm7mf47r939zqkpepwekenj6uqhd5x555pn80utevvavjsfgqem2' //雀卓
