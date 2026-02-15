@@ -21,7 +21,7 @@ export const getResponseEvent = async (
 	let events: VerifiedEvent[] | null;
 	if (
 		requestEvent === undefined ||
-		(isAllowedToPost(requestEvent) && /^quiz$/.test(requestEvent.content))
+		(isAllowedToPost(requestEvent) && /quiz$/.test(requestEvent.content))
 	) {
 		events = selectGetResponse(requestEvent, signer);
 	} else {
