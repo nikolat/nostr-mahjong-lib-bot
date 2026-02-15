@@ -23,7 +23,7 @@ export const getResponseEvent = async (
 		requestEvent === undefined ||
 		(isAllowedToPost(requestEvent) && /^quiz$/.test(requestEvent.content))
 	) {
-		events = selectGetResponse(signer);
+		events = selectGetResponse(requestEvent, signer);
 	} else {
 		res = await selectResponse(requestEvent, signer);
 		if (res === null) {
@@ -35,18 +35,21 @@ export const getResponseEvent = async (
 	return events;
 };
 
-const selectGetResponse = (signer: Signer): VerifiedEvent[] | null => {
+const selectGetResponse = (
+	event: NostrEvent | undefined,
+	signer: Signer
+): VerifiedEvent[] | null => {
 	switch (nip19.npubEncode(signer.getPublicKey())) {
 		case 'npub1rnrnclxznfkqqu8nnpt0mwp4hj0xe005mnwjqlafaluv7n2kn80sy53aq2':
-			return getScoreQuiz(signer);
+			return getScoreQuiz(event, signer);
 		case 'npub1chunacswmcejn8ge95vzl22a2g6pd4nfchygslnt9gj9dshqcvqq5amrlj':
-			return getMachiQuiz(signer);
+			return getMachiQuiz(event, signer);
 		default:
 			return null;
 	}
 };
 
-const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
+const getScoreQuiz = (event: NostrEvent | undefined, signer: Signer): VerifiedEvent[] => {
 	const r = Math.floor(Math.random() * HANDS.length);
 	const hand: string = HANDS[r];
 	const regstr = /(([1-9][mpsz]){13})(\+?)([1-9][mpsz])\+([1-4])([1-4])/;
@@ -66,10 +69,13 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	const jifu_hai = `${nJi}z`;
 	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)} :${convertEmoji(agari_hai)}:`;
 	const dora = paikind[Math.floor(Math.random() * paikind.length)];
-	const tags: string[][] = [
-		['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root'],
-		...getTagsEmoji(`${tehai}${agari_hai}${dora}`)
-	];
+	const tags: string[][] =
+		event === undefined
+			? [['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root']]
+			: getTagsReply(event);
+	for (const tag of getTagsEmoji(`${tehai}${agari_hai}${dora}`)) {
+		tags.push(tag);
+	}
 	const content = `点数計算問題 ${ba}場 ${ie}家 ドラ:${convertEmoji(dora)}: ${tsumo_ron}\n${paishi}`;
 	const evtQuiz: EventTemplate = {
 		content,
@@ -93,7 +99,7 @@ const getScoreQuiz = (signer: Signer): VerifiedEvent[] => {
 	return [eventQuiz, eventAnswer];
 };
 
-const getMachiQuiz = (signer: Signer): VerifiedEvent[] => {
+const getMachiQuiz = (event: NostrEvent | undefined, signer: Signer): VerifiedEvent[] => {
 	const colors: string[] = ['m', 'p', 's'];
 	const r = Math.floor(Math.random() * colors.length);
 	const color: string = colors[r];
@@ -129,10 +135,13 @@ const getMachiQuiz = (signer: Signer): VerifiedEvent[] => {
 	const tehai = match[0];
 	const paishi = `${tehai.replaceAll(/[1-9][mpsz]/g, (p) => `:${convertEmoji(p)}:`)}`;
 	const content = `清一色待ち問題\n${paishi}`;
-	const tags: string[][] = [
-		['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root'],
-		...getTagsEmoji(tehai)
-	];
+	const tags: string[][] =
+		event === undefined
+			? [['e', 'c8d5c2709a5670d6f621ac8020ac3e4fc3057a4961a15319f7c0818309407723', '', 'root']]
+			: getTagsReply(event);
+	for (const tag of getTagsEmoji(tehai)) {
+		tags.push(tag);
+	}
 	const evtQuiz: EventTemplate = {
 		content,
 		tags,
