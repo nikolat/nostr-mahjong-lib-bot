@@ -502,7 +502,12 @@ const getTagsEmoji = (tehai: string): string[][] => {
 };
 
 const getEmojiTag = (pi: string): string[] => {
-	return ['emoji', convertEmoji(pi), getEmojiUrl(pi)];
+	return [
+		'emoji',
+		convertEmoji(pi),
+		getEmojiUrl(pi),
+		'30030:cd408a69cc6c737ca1a76efc3fa247c6ca53ec807f6e7c9574164164797e8162:Mahjong Tiles'
+	];
 };
 
 const convertEmoji = (pai: string) => {
